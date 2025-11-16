@@ -1,13 +1,19 @@
 import { OptimizationResult } from "@/types/optimizer";
 import { Card } from "@/components/ui/card";
 import { CuttingLayout } from "./CuttingLayout";
+import { RemainingPieces } from "./RemainingPieces";
 import { TrendingUp, Scissors, Layers } from "lucide-react";
+import { RemainingPiece, StockSheet } from "@/types/optimizer";
 
 interface OptimizationResultsProps {
   result: OptimizationResult;
+  onAddRemainingToStock: (pieces: RemainingPiece[]) => void;
 }
 
-export function OptimizationResults({ result }: OptimizationResultsProps) {
+export function OptimizationResults({ result, onAddRemainingToStock }: OptimizationResultsProps) {
+  // Collect all remaining pieces from all layouts
+  const allRemainingPieces = result.layouts.flatMap((layout) => layout.remainingPieces);
+
   return (
     <div className="space-y-6">
       <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10">
@@ -48,6 +54,11 @@ export function OptimizationResults({ result }: OptimizationResultsProps) {
           </div>
         </div>
       </Card>
+
+      <RemainingPieces 
+        remainingPieces={allRemainingPieces}
+        onAddToStock={onAddRemainingToStock}
+      />
 
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">Cutting Layouts</h3>

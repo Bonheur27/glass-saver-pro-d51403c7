@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { StockSheetForm } from "@/components/StockSheetForm";
 import { PieceForm } from "@/components/PieceForm";
 import { OptimizationResults } from "@/components/OptimizationResults";
-import { StockSheet, Piece, OptimizationResult } from "@/types/optimizer";
+import { StockSheet, Piece, OptimizationResult, RemainingPiece } from "@/types/optimizer";
 import { optimizeCutting } from "@/utils/optimizer";
 import { toast } from "sonner";
 import { Sparkles, Github } from "lucide-react";
@@ -42,8 +42,19 @@ const Index = () => {
 
   const handleReset = () => {
     setResult(null);
-    setSheets([]);
-    setPieces([]);
+  };
+
+  const handleAddRemainingToStock = (remainingPieces: RemainingPiece[]) => {
+    // Convert remaining pieces to stock sheets
+    const newSheets: StockSheet[] = remainingPieces.map((piece) => ({
+      id: `remaining-${Date.now()}-${Math.random()}`,
+      label: `Scrap from ${piece.sheetLabel}`,
+      width: piece.width,
+      height: piece.height,
+      quantity: 1,
+    }));
+    
+    setSheets([...sheets, ...newSheets]);
   };
 
   return (
@@ -128,7 +139,10 @@ const Index = () => {
               </Button>
             </div>
             
-            <OptimizationResults result={result} />
+            <OptimizationResults 
+              result={result} 
+              onAddRemainingToStock={handleAddRemainingToStock}
+            />
           </div>
         )}
       </main>

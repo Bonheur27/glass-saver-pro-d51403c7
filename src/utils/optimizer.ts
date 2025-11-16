@@ -57,10 +57,18 @@ export function optimizeCutting(
         const sheetArea = sheet.width * sheet.height;
         const wastePercentage = ((sheetArea - usedArea) / sheetArea) * 100;
         
+        // Calculate remaining usable pieces from empty spaces
+        const remainingPieces = calculateRemainingPieces(
+          sheet,
+          occupiedSpaces,
+          `${sheet.id}-${sheetNum}`
+        );
+        
         layouts.push({
           sheet: { ...sheet, id: `${sheet.id}-${sheetNum}` },
           placedPieces,
           wastePercentage,
+          remainingPieces,
         });
       }
       
@@ -174,4 +182,91 @@ function hasOverlap(
     }
   }
   return false;
+}
+
+function calculateRemainingPieces(
+  sheet: StockSheet,
+  occupiedSpaces: { x: number; y: number; width: number; height: number }[],
+  sheetLabel: string
+) {
+  const remainingPieces: { id: string; width: number; height: number; x: number; y: number; sheetLabel: string }[] = [];
+  const minUsableSize = 100; // Minimum size in mm to consider a piece usable
+  
+  // Create a grid to track free spaces
+  const gridSize = 10; // Resolution for finding free spaces
+  const gridWidth = Math.ceil(sheet.width / gridSize);
+  const gridHeight = Math.ceil(sheet.height / gridSize);
+  const grid: boolean[][] = Array(gridHeight).fill(null).map(() => Array(gridWidth).fill(false));
+  
+  // Mark occupied spaces on grid
+  for (const occupied of occupiedSpaces) {
+    const startX = Math.floor(occupied.x / gridSize);
+    const startY = Math.floor(occupied.y / gridSize);
+    const endX = Math.min(Math.ceil((occupied.x + occupied.width) / gridSize), gridWidth);
+    const endY = Math.min(Math.ceil((occupied.y + occupied.height) / gridSize), gridHeight);
+    
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        if (y < gridHeight && x < gridWidth) {
+          grid[y][x] = true;
+        }
+      }
+    }
+  }
+  
+  // Find rectangular free spaces
+  const visited: boolean[][] = Array(gridHeight).fill(null).map(() => Array(gridWidth).fill(false));
+  
+  for (let y = 0; y < gridHeight; y++) {
+    for (let x = 0; x < gridWidth; x++) {
+      if (!grid[y][x] && !visited[y][x]) {
+        // Found a free cell, try to expand it into a rectangle
+        let width = 0;
+        let height = 0;
+        
+        // Find maximum width from this point
+        while (x + width < gridWidth && !grid[y][x + width] && !visited[y][x + width]) {
+          width++;
+        }
+        
+        // Find maximum height that maintains the width
+        let canExpand = true;
+        while (canExpand && y + height < gridHeight) {
+          for (let i = 0; i < width; i++) {
+            if (x + i >= gridWidth || grid[y + height][x + i] || visited[y + height][x + i]) {
+              canExpand = false;
+              break;
+            }
+          }
+          if (canExpand) height++;
+        }
+        
+        const actualWidth = width * gridSize;
+        const actualHeight = height * gridSize;
+        
+        // Only add if it's a usable size
+        if (actualWidth >= minUsableSize && actualHeight >= minUsableSize) {
+          remainingPieces.push({
+            id: `remaining-${sheetLabel}-${remainingPieces.length}`,
+            width: actualWidth,
+            height: actualHeight,
+            x: x * gridSize,
+            y: y * gridSize,
+            sheetLabel,
+          });
+        }
+        
+        // Mark as visited
+        for (let dy = 0; dy < height; dy++) {
+          for (let dx = 0; dx < width; dx++) {
+            if (y + dy < gridHeight && x + dx < gridWidth) {
+              visited[y + dy][x + dx] = true;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return remainingPieces;
 }
