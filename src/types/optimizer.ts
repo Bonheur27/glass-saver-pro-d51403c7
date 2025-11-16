@@ -21,10 +21,20 @@ export interface PlacedPiece {
   rotated: boolean;
 }
 
+export interface RemainingPiece {
+  id: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  sheetLabel: string;
+}
+
 export interface SheetLayout {
   sheet: StockSheet;
   placedPieces: PlacedPiece[];
   wastePercentage: number;
+  remainingPieces: RemainingPiece[];
 }
 
 export interface OptimizationResult {
