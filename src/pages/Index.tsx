@@ -32,10 +32,20 @@ const Index = () => {
       setResult(optimizationResult);
       setIsOptimizing(false);
       
+      // Calculate total pieces requested
+      const totalPiecesRequested = pieces.reduce((sum, p) => sum + p.quantity, 0);
+      const totalPiecesPlaced = optimizationResult.layouts.reduce(
+        (sum, layout) => sum + layout.placedPieces.length,
+        0
+      );
+      const unplacedPieces = totalPiecesRequested - totalPiecesPlaced;
+      
       if (optimizationResult.layouts.length === 0) {
-        toast.error("Could not fit all pieces. Try adding more sheets or reducing piece sizes.");
+        toast.error("Could not fit any pieces. All pieces are too large for the available sheets.");
+      } else if (unplacedPieces > 0) {
+        toast.warning(`Optimization complete! Using ${optimizationResult.totalSheets} sheets with ${optimizationResult.efficiency.toFixed(1)}% efficiency. ${unplacedPieces} piece(s) could not fit - add more or larger sheets.`);
       } else {
-        toast.success(`Optimization complete! Using ${optimizationResult.totalSheets} sheets with ${optimizationResult.efficiency.toFixed(1)}% efficiency.`);
+        toast.success(`Optimization complete! Using ${optimizationResult.totalSheets} sheets with ${optimizationResult.efficiency.toFixed(1)}% efficiency. All pieces placed!`);
       }
     }, 500);
   };
