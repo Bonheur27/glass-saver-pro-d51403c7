@@ -50,7 +50,7 @@ export function RemainingPieces({ remainingPieces, onAddToStock }: RemainingPiec
           <div>
             <h3 className="text-lg font-semibold">Remaining Usable Pieces</h3>
             <p className="text-sm text-muted-foreground">
-              {remainingPieces.length} piece(s) • {(totalArea / 1000000).toFixed(2)} m² total
+              {remainingPieces.length} piece(s) • {(totalArea / 10000).toFixed(2)} m² total
             </p>
           </div>
         </div>
@@ -107,10 +107,10 @@ export function RemainingPieces({ remainingPieces, onAddToStock }: RemainingPiec
               </div>
               <div className="space-y-1">
                 <p className="text-lg font-bold">
-                  {piece.width} × {piece.height} mm
+                  {(piece.width / 10).toFixed(1)} × {(piece.height / 10).toFixed(1)} cm
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {((piece.width * piece.height) / 1000000).toFixed(2)} m²
+                  {((piece.width * piece.height) / 10000).toFixed(2)} m²
                 </p>
               </div>
             </button>
