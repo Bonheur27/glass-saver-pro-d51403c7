@@ -1,9 +1,12 @@
 import { OptimizationResult } from "@/types/optimizer";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { CuttingLayout } from "./CuttingLayout";
 import { RemainingPieces } from "./RemainingPieces";
-import { TrendingUp, Scissors, Layers } from "lucide-react";
-import { RemainingPiece, StockSheet } from "@/types/optimizer";
+import { TrendingUp, Scissors, Layers, FileDown } from "lucide-react";
+import { RemainingPiece } from "@/types/optimizer";
+import { exportResultsToPDF } from "@/utils/exportPDF";
+import { toast } from "sonner";
 
 interface OptimizationResultsProps {
   result: OptimizationResult;
@@ -14,10 +17,26 @@ export function OptimizationResults({ result, onAddRemainingToStock }: Optimizat
   // Collect all remaining pieces from all layouts
   const allRemainingPieces = result.layouts.flatMap((layout) => layout.remainingPieces);
 
+  const handleExportPDF = () => {
+    try {
+      exportResultsToPDF(result);
+      toast.success("PDF report exported successfully!");
+    } catch (error) {
+      toast.error("Failed to export PDF report");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10">
-        <h2 className="text-2xl font-bold mb-4 text-foreground">Optimization Results</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-foreground">Optimization Results</h2>
+          <Button onClick={handleExportPDF} variant="outline">
+            <FileDown className="mr-2 h-4 w-4" />
+            Export PDF Report
+          </Button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/20 rounded-lg">

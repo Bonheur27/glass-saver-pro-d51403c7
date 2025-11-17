@@ -35,7 +35,7 @@ export function CuttingLayout({ layout, index }: CuttingLayoutProps) {
           Sheet {index + 1}: {layout.sheet.label}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {layout.sheet.width} × {layout.sheet.height} mm
+          {(layout.sheet.width / 10).toFixed(1)} × {(layout.sheet.height / 10).toFixed(1)} cm
         </p>
         <div className="flex flex-wrap gap-4 mt-2">
           <span className="text-sm">
@@ -123,7 +123,7 @@ export function CuttingLayout({ layout, index }: CuttingLayoutProps) {
                   fill="white"
                   fontSize="10"
                 >
-                  {width}×{height}
+                  {(width / 10).toFixed(1)}×{(height / 10).toFixed(1)}cm
                 </text>
               </g>
             );
@@ -182,7 +182,7 @@ export function CuttingLayout({ layout, index }: CuttingLayoutProps) {
                 fill={remainingColor}
                 fontSize="9"
               >
-                {remaining.width}×{remaining.height}
+                {(remaining.width / 10).toFixed(1)}×{(remaining.height / 10).toFixed(1)}cm
               </text>
             </g>
           ))}

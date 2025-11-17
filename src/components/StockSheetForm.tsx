@@ -24,8 +24,8 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
     onAdd({
       id: Date.now().toString(),
       label,
-      width: parseFloat(width),
-      height: parseFloat(height),
+      width: parseFloat(width) * 10, // Convert cm to mm
+      height: parseFloat(height) * 10, // Convert cm to mm
       quantity: parseInt(quantity) || 1,
     });
     
@@ -51,23 +51,25 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
             />
           </div>
           <div>
-            <Label htmlFor="sheet-width">Width (mm)</Label>
+            <Label htmlFor="sheet-width">Width (cm)</Label>
             <Input
               id="sheet-width"
               type="number"
+              step="0.1"
               value={width}
               onChange={(e) => setWidth(e.target.value)}
-              placeholder="1000"
+              placeholder="100"
             />
           </div>
           <div>
-            <Label htmlFor="sheet-height">Height (mm)</Label>
+            <Label htmlFor="sheet-height">Height (cm)</Label>
             <Input
               id="sheet-height"
               type="number"
+              step="0.1"
               value={height}
               onChange={(e) => setHeight(e.target.value)}
-              placeholder="2000"
+              placeholder="200"
             />
           </div>
           <div>
@@ -98,7 +100,7 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
               <div className="flex-1">
                 <span className="font-medium">{sheet.label}</span>
                 <span className="text-muted-foreground ml-3">
-                  {sheet.width} × {sheet.height} mm
+                  {(sheet.width / 10).toFixed(1)} × {(sheet.height / 10).toFixed(1)} cm
                 </span>
                 <span className="text-muted-foreground ml-3">Qty: {sheet.quantity}</span>
               </div>

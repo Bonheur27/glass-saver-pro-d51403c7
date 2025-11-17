@@ -24,8 +24,8 @@ export function PieceForm({ pieces, onAdd, onRemove }: PieceFormProps) {
     onAdd({
       id: Date.now().toString(),
       label,
-      width: parseFloat(width),
-      height: parseFloat(height),
+      width: parseFloat(width) * 10, // Convert cm to mm
+      height: parseFloat(height) * 10, // Convert cm to mm
       quantity: parseInt(quantity) || 1,
     });
     
@@ -51,23 +51,25 @@ export function PieceForm({ pieces, onAdd, onRemove }: PieceFormProps) {
             />
           </div>
           <div>
-            <Label htmlFor="piece-width">Width (mm)</Label>
+            <Label htmlFor="piece-width">Width (cm)</Label>
             <Input
               id="piece-width"
               type="number"
+              step="0.1"
               value={width}
               onChange={(e) => setWidth(e.target.value)}
-              placeholder="500"
+              placeholder="50"
             />
           </div>
           <div>
-            <Label htmlFor="piece-height">Height (mm)</Label>
+            <Label htmlFor="piece-height">Height (cm)</Label>
             <Input
               id="piece-height"
               type="number"
+              step="0.1"
               value={height}
               onChange={(e) => setHeight(e.target.value)}
-              placeholder="800"
+              placeholder="80"
             />
           </div>
           <div>
@@ -98,7 +100,7 @@ export function PieceForm({ pieces, onAdd, onRemove }: PieceFormProps) {
               <div className="flex-1">
                 <span className="font-medium">{piece.label}</span>
                 <span className="text-muted-foreground ml-3">
-                  {piece.width} × {piece.height} mm
+                  {(piece.width / 10).toFixed(1)} × {(piece.height / 10).toFixed(1)} cm
                 </span>
                 <span className="text-muted-foreground ml-3">Qty: {piece.quantity}</span>
               </div>
