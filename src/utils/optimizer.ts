@@ -6,81 +6,97 @@ export function optimizeCutting(
   pieces: Piece[]
 ): OptimizationResult {
   const layouts: SheetLayout[] = [];
-  let remainingPieces = [...pieces];
   
   // Expand pieces by quantity
   const expandedPieces: Piece[] = [];
   pieces.forEach(piece => {
     for (let i = 0; i < piece.quantity; i++) {
-      expandedPieces.push({ ...piece, id: `${piece.id}-${i}` });
+      expandedPieces.push({ ...piece, id: `${piece.id}-${i}`, quantity: 1 });
     }
   });
   
   // Sort pieces by area (largest first) for better packing
   expandedPieces.sort((a, b) => (b.width * b.height) - (a.width * a.height));
   
-  let currentPieceIndex = 0;
+  // Track which pieces have been placed
+  const piecesPlaced = new Set<string>();
   
-  // Process each stock sheet type
-  for (const sheet of stockSheets) {
-    for (let sheetNum = 0; sheetNum < sheet.quantity; sheetNum++) {
-      if (currentPieceIndex >= expandedPieces.length) break;
+  // Expand stock sheets by quantity to have individual sheets to work with
+  const expandedSheets: (StockSheet & { sheetNum: number })[] = [];
+  stockSheets.forEach(sheet => {
+    for (let i = 0; i < sheet.quantity; i++) {
+      expandedSheets.push({ 
+        ...sheet, 
+        id: `${sheet.id}-${i}`,
+        sheetNum: i,
+        quantity: 1 
+      });
+    }
+  });
+  
+  // Process each expanded sheet
+  for (const sheet of expandedSheets) {
+    // Get remaining pieces that haven't been placed yet
+    const remainingPieces = expandedPieces.filter(p => !piecesPlaced.has(p.id));
+    
+    if (remainingPieces.length === 0) break;
+    
+    const placedPieces: PlacedPiece[] = [];
+    const occupiedSpaces: { x: number; y: number; width: number; height: number }[] = [];
+    
+    // Try to place as many remaining pieces as possible on this sheet
+    for (const piece of remainingPieces) {
+      if (piecesPlaced.has(piece.id)) continue;
       
-      const placedPieces: PlacedPiece[] = [];
-      const occupiedSpaces: { x: number; y: number; width: number; height: number }[] = [];
+      const placement = findBestPlacement(sheet, piece, occupiedSpaces);
       
-      // Try to place as many pieces as possible on this sheet
-      while (currentPieceIndex < expandedPieces.length) {
-        const piece = expandedPieces[currentPieceIndex];
-        const placement = findBestPlacement(sheet, piece, occupiedSpaces);
-        
-        if (placement) {
-          placedPieces.push(placement);
-          occupiedSpaces.push({
-            x: placement.x,
-            y: placement.y,
-            width: placement.rotated ? piece.height : piece.width,
-            height: placement.rotated ? piece.width : piece.height,
-          });
-          currentPieceIndex++;
-        } else {
-          break; // Can't fit any more pieces on this sheet
-        }
-      }
-      
-      if (placedPieces.length > 0) {
-        const usedArea = placedPieces.reduce((sum, pp) => {
-          const w = pp.rotated ? pp.piece.height : pp.piece.width;
-          const h = pp.rotated ? pp.piece.width : pp.piece.height;
-          return sum + (w * h);
-        }, 0);
-        const sheetArea = sheet.width * sheet.height;
-        const wastePercentage = ((sheetArea - usedArea) / sheetArea) * 100;
-        
-        // Calculate remaining usable pieces from empty spaces
-        const remainingPieces = calculateRemainingPieces(
-          sheet,
-          occupiedSpaces,
-          `${sheet.id}-${sheetNum}`
-        );
-        
-        layouts.push({
-          sheet: { ...sheet, id: `${sheet.id}-${sheetNum}` },
-          placedPieces,
-          wastePercentage,
-          remainingPieces,
+      if (placement) {
+        placedPieces.push(placement);
+        occupiedSpaces.push({
+          x: placement.x,
+          y: placement.y,
+          width: placement.rotated ? piece.height : piece.width,
+          height: placement.rotated ? piece.width : piece.height,
         });
+        piecesPlaced.add(piece.id);
       }
-      
-      if (currentPieceIndex >= expandedPieces.length) break;
     }
     
-    if (currentPieceIndex >= expandedPieces.length) break;
+    // Only create a layout if pieces were placed
+    if (placedPieces.length > 0) {
+      const usedArea = placedPieces.reduce((sum, pp) => {
+        const w = pp.rotated ? pp.piece.height : pp.piece.width;
+        const h = pp.rotated ? pp.piece.width : pp.piece.height;
+        return sum + (w * h);
+      }, 0);
+      const sheetArea = sheet.width * sheet.height;
+      const wastePercentage = ((sheetArea - usedArea) / sheetArea) * 100;
+      
+      // Calculate remaining usable pieces from empty spaces
+      const remainingPieces = calculateRemainingPieces(
+        sheet,
+        occupiedSpaces,
+        sheet.id
+      );
+      
+      layouts.push({
+        sheet,
+        placedPieces,
+        wastePercentage,
+        remainingPieces,
+      });
+    }
   }
   
   const totalSheets = layouts.length;
   const totalWaste = layouts.reduce((sum, l) => sum + l.wastePercentage, 0) / totalSheets || 0;
   const efficiency = 100 - totalWaste;
+  
+  // Check if all pieces were placed
+  const unplacedCount = expandedPieces.length - piecesPlaced.size;
+  if (unplacedCount > 0) {
+    console.warn(`Warning: ${unplacedCount} piece(s) could not be placed. You may need larger or more stock sheets.`);
+  }
   
   return {
     layouts,
