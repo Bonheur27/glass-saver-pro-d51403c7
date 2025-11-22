@@ -6,7 +6,8 @@ import { OptimizationResults } from "@/components/OptimizationResults";
 import { StockSheet, Piece, OptimizationResult, RemainingPiece } from "@/types/optimizer";
 import { optimizeCutting } from "@/utils/optimizer";
 import { toast } from "sonner";
-import { Sparkles, Github } from "lucide-react";
+import { Sparkles, Github, LayoutDashboard } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [sheets, setSheets] = useState<StockSheet[]>([]);
@@ -82,12 +83,20 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground">Minimize waste, maximize efficiency</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" asChild>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-                <Github className="mr-2 h-4 w-4" />
-                GitHub
-              </a>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                  <Github className="mr-2 h-4 w-4" />
+                  GitHub
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
