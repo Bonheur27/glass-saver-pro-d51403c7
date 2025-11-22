@@ -44,21 +44,48 @@ export function optimizeCutting(
     const placedPieces: PlacedPiece[] = [];
     const occupiedSpaces: { x: number; y: number; width: number; height: number }[] = [];
     
-    // Try to place as many remaining pieces as possible on this sheet
-    for (const piece of remainingPieces) {
-      if (piecesPlaced.has(piece.id)) continue;
+    // Use greedy best-fit algorithm: repeatedly find the best piece that fits
+    let foundPlacement = true;
+    while (foundPlacement && remainingPieces.length > 0) {
+      foundPlacement = false;
+      let bestPlacement: PlacedPiece | null = null;
+      let bestPieceIndex = -1;
+      let bestScore = -1;
       
-      const placement = findBestPlacement(sheet, piece, occupiedSpaces);
+      // Check all remaining pieces to find the best fit
+      for (let i = 0; i < remainingPieces.length; i++) {
+        const piece = remainingPieces[i];
+        if (piecesPlaced.has(piece.id)) continue;
+        
+        const placement = findBestPlacement(sheet, piece, occupiedSpaces);
+        
+        if (placement) {
+          // Score based on area utilization and position (prefer bottom-left)
+          const pieceArea = (placement.rotated ? piece.height : piece.width) * 
+                           (placement.rotated ? piece.width : piece.height);
+          const positionScore = 1000000 - (placement.x + placement.y); // Prefer bottom-left
+          const score = pieceArea * 1000 + positionScore;
+          
+          if (score > bestScore) {
+            bestScore = score;
+            bestPlacement = placement;
+            bestPieceIndex = i;
+          }
+        }
+      }
       
-      if (placement) {
-        placedPieces.push(placement);
+      // Place the best piece found
+      if (bestPlacement && bestPieceIndex >= 0) {
+        const piece = remainingPieces[bestPieceIndex];
+        placedPieces.push(bestPlacement);
         occupiedSpaces.push({
-          x: placement.x,
-          y: placement.y,
-          width: placement.rotated ? piece.height : piece.width,
-          height: placement.rotated ? piece.width : piece.height,
+          x: bestPlacement.x,
+          y: bestPlacement.y,
+          width: bestPlacement.rotated ? piece.height : piece.width,
+          height: bestPlacement.rotated ? piece.width : piece.height,
         });
         piecesPlaced.add(piece.id);
+        foundPlacement = true;
       }
     }
     
@@ -151,9 +178,9 @@ function generateCandidatePositions(
   // Always try bottom-left corner first
   positions.push({ x: 0, y: 0, width: orientation.width, height: orientation.height });
   
-  // Generate positions at the top-right corner of each occupied space
+  // Generate positions at corners and edges of each occupied space
   for (const occupied of occupiedSpaces) {
-    // Right edge
+    // Right edge (aligned with bottom)
     if (occupied.x + occupied.width + orientation.width <= sheet.width) {
       positions.push({
         x: occupied.x + occupied.width,
@@ -163,10 +190,43 @@ function generateCandidatePositions(
       });
     }
     
-    // Top edge
+    // Top edge (aligned with left)
     if (occupied.y + occupied.height + orientation.height <= sheet.height) {
       positions.push({
         x: occupied.x,
+        y: occupied.y + occupied.height,
+        width: orientation.width,
+        height: orientation.height,
+      });
+    }
+    
+    // Top-right corner
+    if (occupied.x + occupied.width + orientation.width <= sheet.width &&
+        occupied.y + occupied.height + orientation.height <= sheet.height) {
+      positions.push({
+        x: occupied.x + occupied.width,
+        y: occupied.y + occupied.height,
+        width: orientation.width,
+        height: orientation.height,
+      });
+    }
+    
+    // Right edge (aligned with top)
+    if (occupied.x + occupied.width + orientation.width <= sheet.width &&
+        occupied.y + occupied.height >= orientation.height) {
+      positions.push({
+        x: occupied.x + occupied.width,
+        y: occupied.y + occupied.height - orientation.height,
+        width: orientation.width,
+        height: orientation.height,
+      });
+    }
+    
+    // Top edge (aligned with right)
+    if (occupied.x + occupied.width >= orientation.width &&
+        occupied.y + occupied.height + orientation.height <= sheet.height) {
+      positions.push({
+        x: occupied.x + occupied.width - orientation.width,
         y: occupied.y + occupied.height,
         width: orientation.width,
         height: orientation.height,
