@@ -154,6 +154,11 @@ function findBestPlacement(
     const positions = generateCandidatePositions(sheet, orientation, occupiedSpaces);
     
     for (const pos of positions) {
+      // Validate piece stays within sheet boundaries
+      if (pos.x + pos.width > sheet.width || pos.y + pos.height > sheet.height) {
+        continue;
+      }
+      
       if (!hasOverlap(pos, occupiedSpaces)) {
         return {
           piece,
