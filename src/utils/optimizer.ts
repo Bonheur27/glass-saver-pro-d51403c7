@@ -78,11 +78,17 @@ export function optimizeCutting(
       if (bestPlacement && bestPieceIndex >= 0) {
         const piece = remainingPieces[bestPieceIndex];
         placedPieces.push(bestPlacement);
+        
+        // Add kerf compensation to occupied space
+        const kerf = sheet.kerf || 0;
+        const pieceWidth = bestPlacement.rotated ? piece.height : piece.width;
+        const pieceHeight = bestPlacement.rotated ? piece.width : piece.height;
+        
         occupiedSpaces.push({
           x: bestPlacement.x,
           y: bestPlacement.y,
-          width: bestPlacement.rotated ? piece.height : piece.width,
-          height: bestPlacement.rotated ? piece.width : piece.height,
+          width: pieceWidth + kerf,
+          height: pieceHeight + kerf,
         });
         piecesPlaced.add(piece.id);
         foundPlacement = true;
