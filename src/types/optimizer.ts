@@ -4,6 +4,7 @@ export interface StockSheet {
   height: number;
   label: string;
   quantity: number;
+  kerf?: number; // Blade kerf width in mm
 }
 
 export interface Piece {

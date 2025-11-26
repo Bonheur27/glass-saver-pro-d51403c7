@@ -17,6 +17,7 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
   const [quantity, setQuantity] = useState("1");
+  const [kerf, setKerf] = useState("3");
 
   const handleAdd = () => {
     if (!label || !width || !height) return;
@@ -27,12 +28,14 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
       width: parseFloat(width) * 10, // Convert cm to mm
       height: parseFloat(height) * 10, // Convert cm to mm
       quantity: parseInt(quantity) || 1,
+      kerf: parseFloat(kerf) || 0,
     });
     
     setLabel("");
     setWidth("");
     setHeight("");
     setQuantity("1");
+    setKerf("3");
   };
 
   return (
@@ -40,7 +43,7 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
       <h2 className="text-xl font-semibold mb-4 text-foreground">Stock Sheets</h2>
       
       <div className="grid gap-4 mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <Label htmlFor="sheet-label">Label</Label>
             <Input
@@ -73,6 +76,17 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
             />
           </div>
           <div>
+            <Label htmlFor="sheet-kerf">Kerf (mm)</Label>
+            <Input
+              id="sheet-kerf"
+              type="number"
+              step="0.1"
+              value={kerf}
+              onChange={(e) => setKerf(e.target.value)}
+              placeholder="3"
+            />
+          </div>
+          <div>
             <Label htmlFor="sheet-quantity">Quantity</Label>
             <Input
               id="sheet-quantity"
@@ -102,6 +116,7 @@ export function StockSheetForm({ sheets, onAdd, onRemove }: StockSheetFormProps)
                 <span className="text-muted-foreground ml-3">
                   {(sheet.width / 10).toFixed(1)} × {(sheet.height / 10).toFixed(1)} cm
                 </span>
+                <span className="text-muted-foreground ml-3">Kerf: {sheet.kerf || 0}mm</span>
                 <span className="text-muted-foreground ml-3">Qty: {sheet.quantity}</span>
               </div>
               <Button
