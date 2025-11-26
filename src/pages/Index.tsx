@@ -6,14 +6,34 @@ import { OptimizationResults } from "@/components/OptimizationResults";
 import { StockSheet, Piece, OptimizationResult, RemainingPiece } from "@/types/optimizer";
 import { optimizeCutting } from "@/utils/optimizer";
 import { toast } from "sonner";
-import { Sparkles, Github, LayoutDashboard } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Sparkles, Github, LayoutDashboard, Save, LogIn, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { projectsService } from "@/services/projects";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 const Index = () => {
   const [sheets, setSheets] = useState<StockSheet[]>([]);
   const [pieces, setPieces] = useState<Piece[]>([]);
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [projectName, setProjectName] = useState("");
+  const [projectDescription, setProjectDescription] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleOptimize = () => {
     if (sheets.length === 0) {
@@ -68,6 +88,53 @@ const Index = () => {
     setSheets([...sheets, ...newSheets]);
   };
 
+  const handleSaveProject = async () => {
+    if (!projectName.trim()) {
+      toast.error("Please enter a project name");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await projectsService.create({
+        name: projectName,
+        description: projectDescription,
+        stockSheets: sheets,
+        pieces: pieces,
+        optimizationResult: result || undefined,
+      });
+
+      toast.success("Project saved successfully!");
+      setShowSaveDialog(false);
+      setProjectName("");
+      setProjectDescription("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save project");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveClick = () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to save projects");
+      navigate("/auth");
+      return;
+    }
+
+    if (sheets.length === 0 || pieces.length === 0) {
+      toast.error("Add sheets and pieces before saving");
+      return;
+    }
+
+    setShowSaveDialog(true);
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Logged out successfully");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
@@ -84,12 +151,31 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {isAuthenticated && (
+                <Button variant="outline" size="sm" onClick={handleSaveClick}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Project
+                </Button>
+              )}
               <Button variant="outline" size="sm" asChild>
                 <Link to="/dashboard">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard
                 </Link>
               </Button>
+              {isAuthenticated ? (
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/auth">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Login
+                  </Link>
+                </Button>
+              )}
               <Button variant="outline" size="sm" asChild>
                 <a href="https://github.com" target="_blank" rel="noopener noreferrer">
                   <Github className="mr-2 h-4 w-4" />
@@ -172,6 +258,47 @@ const Index = () => {
           <p>Built with precision for glass cutting professionals</p>
         </div>
       </footer>
+
+      {/* Save Project Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Project</DialogTitle>
+            <DialogDescription>
+              Give your optimization project a name to save it to your account.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="project-name">Project Name</Label>
+              <Input
+                id="project-name"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="e.g., Kitchen Cabinet Doors"
+              />
+            </div>
+            <div>
+              <Label htmlFor="project-description">Description (Optional)</Label>
+              <Textarea
+                id="project-description"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                placeholder="Add any notes about this project..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProject} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Project"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
