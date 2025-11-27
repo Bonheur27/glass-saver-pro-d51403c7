@@ -134,8 +134,14 @@ export default function Dashboard() {
             <Button variant="ghost" size="icon" onClick={fetchDashboardData} disabled={loading}>
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            <Link to="/">
+            <Link to="/projects">
               <Button variant="outline">
+                <Package className="mr-2 h-4 w-4" />
+                All Projects
+              </Button>
+            </Link>
+            <Link to="/">
+              <Button>
                 <Scissors className="mr-2 h-4 w-4" />
                 New Optimization
               </Button>
